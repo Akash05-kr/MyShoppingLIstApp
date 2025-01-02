@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.AlertDialog
@@ -35,7 +33,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.contentValuesOf
+
+import androidx.compose.foundation.lazy.items
+
+
 
 data class ShoppingItem(
     val id: Int,
@@ -71,17 +72,18 @@ fun ShoppingListApp(modifier: Modifier = Modifier) {
                 item ->
                 if(item.isEditing){
                     ShoppingItemEditor(item= item, onEditComplete= {
-                        editedName, editedQuntity ->
+                            editedName, editedQuantity ->
                         sItems = sItems.map{it.copy(isEditing = false)}
-                        val editItem = sItems.find { it.id == item.id }
+                        val editedItem = sItems.find { it.id == item.id }
+
                         editedItem?.let {
                             it.name = editedName
-                            it.quantity = editedQuntity
+                            it.quantity = editedQuantity
                         }
                     })
                 }else{
                     ShoppingListItem(item = item, onEditClick = {
-                        sItems = sItems.map { {it.copy(isEditing = it.id =item.id)} }
+                        sItems = sItems.map{it.copy(isEditing = it.id == item.id)}
                     },
                         onDeleteClick = {
                             sItems = sItems-item
