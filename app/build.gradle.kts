@@ -41,7 +41,15 @@ android {
 
 dependencies {
 
+    implementation("com.google.maps.android:maps-compose:6.2.1")
     implementation("androidx.paging:paging-compose:3.3.5")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
+    implementation("androidx.navigation:navigation-compose:2.8.5")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

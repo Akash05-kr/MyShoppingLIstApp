@@ -2,6 +2,12 @@
 
 package com.example.myshoppinglistapp
 
+import android.Manifest
+import android.content.Context
+import android.widget.Button
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,23 +41,72 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 
 import androidx.compose.foundation.lazy.items
-
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.ui.tooling.data.SourceContext
+import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.navigation.NavController
+import okhttp3.Address
 
 
 data class ShoppingItem(
     val id: Int,
     var name: String,
     var quantity: Int,
-    val isEditing: Boolean = false
+    val isEditing: Boolean = false,
+    var address: String = ""
 )
 
 
 @Composable
-fun ShoppingListApp(modifier: Modifier = Modifier) {
+fun ShoppingListApp(
+    locationUtils: LocationUtils,
+    viewModel: LocationViewModel,
+    navController: NavController,
+    context: Context,
+    address: String
+) {
     var sItems by remember { mutableStateOf(listOf<ShoppingItem>()) }
     var showDialog by remember { mutableStateOf( false) }
     var itemName by remember { mutableStateOf("") }
     var itemQuantity by remember { mutableStateOf("") }
+
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult =  {permissions ->
+            if (permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+                && permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true){
+                // I have the permission
+                locationUtils.requestLocationUpdates(viewModel = viewModel)
+
+            }
+            else{
+                ///  Ask for permission
+                val rationalRequired = ActivityCompat.shouldShowRequestPermissionRationale(
+                    context as MainActivity,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) || ActivityCompat.shouldShowRequestPermissionRationale(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION)
+
+                if (rationalRequired){
+                    Toast.makeText(context,
+                        "Location Permission is required for this feature to work",
+                        Toast.LENGTH_LONG)
+                        .show()
+                }else{
+                    Toast.makeText(context,
+                        "Location Permission is required for this please enable it in Android Settings",
+                        Toast.LENGTH_LONG)
+                        .show()
+                }
+            }
+        })
+
 
     Column(modifier = Modifier.fillMaxSize(),
         verticalArrangement =  Arrangement.Center) {
@@ -79,6 +134,7 @@ fun ShoppingListApp(modifier: Modifier = Modifier) {
                         editedItem?.let {
                             it.name = editedName
                             it.quantity = editedQuantity
+                            it.address = address
                         }
                     })
                 }else{
@@ -111,7 +167,8 @@ fun ShoppingListApp(modifier: Modifier = Modifier) {
                             val newItem = ShoppingItem(
                                 id = sItems.size +1,
                                 name = itemName,
-                                quantity = itemQuantity.toInt()
+                                quantity = itemQuantity.toInt(),
+                                address= address
                             )
                             sItems = sItems + newItem
                             showDialog = false
@@ -150,6 +207,20 @@ fun ShoppingListApp(modifier: Modifier = Modifier) {
                             .fillMaxWidth()
                             .padding(8.dp),
                     )
+                    Button(onClick = {
+                        if(locationUtils.hasLocationPermission(context)){
+                            locationUtils.requestLocationUpdates(viewModel)
+                            navController.navigate(("locationscreen")){
+                                this.launchSingleTop
+                            }
+                        }else{
+                            requestPermissionLauncher.launch(arrayOf(
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            , Manifest.permission.ACCESS_FINE_LOCATION))
+                        }
+                    }) {
+                        Text("Address")
+                    }
                 }
             }
             )
@@ -217,15 +288,24 @@ fun ShoppingListItem(
             ),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = item.name, modifier = Modifier.padding(8.dp))
-        Text(text = "Qty: ${item.quantity}", modifier = Modifier.padding(8.dp))
+        Column(modifier = Modifier.weight(1f).padding(8.dp)) {
+            Row {
+                Text(text = item.name, modifier = Modifier.padding(8.dp), fontSize = 16.sp)
+                Text(text = "Qty: ${item.quantity}", modifier = Modifier.padding(8.dp),fontSize = 16.sp)
+            }
+            Row {
+                Icon(imageVector = Icons.Default.LocationOn, contentDescription = null)
+                Text(text =  item.address)
+            }
+        }
+
         Row(modifier = Modifier.padding(8.dp)){
             IconButton(onClick = onEditClick){
-                Icon(painter = painterResource(id = R.drawable.ic_edit), contentDescription = "Edit")
+                Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
             }
 
             IconButton(onClick = onDeleteClick){
-                Icon(painter = painterResource(id = R.drawable.bin), contentDescription = "Delete")
+                Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
             }
 
         }
